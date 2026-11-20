@@ -3,7 +3,7 @@
 const bcrypt = require('bcrypt');
 const { Organization } = require('../models');
 const { getTenantModels } = require('../config/tenantManager');
-const PurchasesService = require('../services/purchasesService');
+const { createPurchase } = require('../services/purchase.service');
 
 async function seedDemo() {
     const existente = await Organization.findOne({ code: 'DEMO01' });
@@ -42,7 +42,7 @@ async function seedDemo() {
     ]);
 
     // Compra inicial → carga stock en Centro y fija los primeros costos promedio
-    await new PurchasesService(tenantModels).create('demo_owner_sin_clerk', {
+    await createPurchase(tenantModels, 'demo_owner_sin_clerk', {
         branchId: central._id,
         supplierName: 'Distribuidora Demo',
         paymentMethod: 'transferencia',
