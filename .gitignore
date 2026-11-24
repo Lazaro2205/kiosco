@@ -1,6 +1,24 @@
+# Dependencias
 node_modules/
+
+# Builds y reportes
 dist/
+build/
+coverage/
+
+# Variables de entorno: nunca se suben (solo los .env.example)
 .env
+.env.*
+!.env.example
+
+# Logs
 *.log
+
+# Sistema operativo y editores
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Librerías locales del equipo anterior
 .devlibs/
