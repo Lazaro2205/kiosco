@@ -1,4 +1,4 @@
-const { Schema } = require('mongoose');
+const { Schema, model } = require('mongoose');
 
 const noteItemSchema = new Schema({
     articleId: { type: Schema.Types.ObjectId, ref: 'Article' },
@@ -8,6 +8,7 @@ const noteItemSchema = new Schema({
 }, { _id: false });
 
 const noteSchema = new Schema({
+    orgId: { type: Schema.Types.ObjectId, ref: 'Organization', required: true },
     branchId: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     type: {
@@ -34,7 +35,7 @@ const noteSchema = new Schema({
     settledAt: { type: Date }
 }, { timestamps: true });
 
-noteSchema.index({ branchId: 1, createdAt: -1 });
-noteSchema.index({ status: 1, createdAt: -1 });
+noteSchema.index({ orgId: 1, branchId: 1, createdAt: -1 });
+noteSchema.index({ orgId: 1, status: 1, createdAt: -1 });
 
-module.exports = noteSchema;
+module.exports = model('Note', noteSchema);

@@ -1,13 +1,15 @@
-const { Schema } = require('mongoose');
+const { Schema, model } = require('mongoose');
 
-// Sucursal del negocio. Cada BD de tenant tiene sus propias sucursales.
+// Sucursal de una empresa.
 const branchSchema = new Schema({
+    orgId: { type: Schema.Types.ObjectId, ref: 'Organization', required: true },
     name: { type: String, required: true, trim: true },
     address: { type: String, trim: true },
     phone: { type: String, trim: true },
     active: { type: Boolean, default: true }
 }, { timestamps: true });
 
-branchSchema.index({ name: 1 }, { unique: true });
+// El nombre de la sucursal no se repite dentro de una empresa.
+branchSchema.index({ orgId: 1, name: 1 }, { unique: true });
 
-module.exports = branchSchema;
+module.exports = model('Branch', branchSchema);

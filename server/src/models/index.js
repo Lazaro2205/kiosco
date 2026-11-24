@@ -1,21 +1,18 @@
-// Punto único de importación de schemas.
-// En multi-tenant, estos schemas se registran como modelos en cada conexión
-// de tenant a través de tenantManager.js. Organization es el único modelo
-// global (vive en la BD principal).
+// Punto único de importación de modelos. Todas las empresas comparten una
+// sola base de datos: cada documento lleva su orgId y cada consulta tiene
+// que filtrar por él (ver docs/decisiones, decisión 1).
 module.exports = {
     Organization: require('./organization'),
-    // Los siguientes exportan SCHEMAS (no modelos compilados).
-    // Se usan en tenantManager para registrarlos en cada BD de tenant.
-    BranchSchema: require('./branch'),
-    UserSchema: require('./user'),
-    ArticleSchema: require('./article'),
-    BranchStockSchema: require('./branchStock'),
-    CashSessionSchema: require('./cashSession'),
-    SaleSchema: require('./sale'),
-    SupplierSchema: require('./supplier'),
-    PurchaseSchema: require('./purchase'),
-    NoteSchema: require('./note'),
-    LedgerEntrySchema: require('./ledgerEntry'),
-    CounterSchema: require('./counter'),
-    CategorySchema: require('./category')
+    Branch: require('./branch'),
+    User: require('./user'),
+    Article: require('./article'),
+    BranchStock: require('./branchStock'),
+    CashSession: require('./cashSession'),
+    Sale: require('./sale'),
+    Supplier: require('./supplier'),
+    Purchase: require('./purchase'),
+    Note: require('./note'),
+    LedgerEntry: require('./ledgerEntry'),
+    Counter: require('./counter'),
+    Category: require('./category')
 };

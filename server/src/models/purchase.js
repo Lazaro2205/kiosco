@@ -1,4 +1,4 @@
-const { Schema } = require('mongoose');
+const { Schema, model } = require('mongoose');
 const { PAYMENT_METHODS } = require('../config/constants');
 
 // Compra de mercadería (la registra el propietario). Suma stock a la sucursal
@@ -13,6 +13,7 @@ const purchaseItemSchema = new Schema({
 }, { _id: false });
 
 const purchaseSchema = new Schema({
+    orgId: { type: Schema.Types.ObjectId, ref: 'Organization', required: true },
     branchId: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
     supplierId: { type: Schema.Types.ObjectId, ref: 'Supplier' },
     // Copia desnormalizada del nombre: el historial no se rompe si el
@@ -25,6 +26,7 @@ const purchaseSchema = new Schema({
     createdBy: { type: String }   // identificador del propietario
 }, { timestamps: true });
 
-purchaseSchema.index({ createdAt: -1 });
+purchaseSchema.index({ orgId: 1, createdAt: -1 });
+purchaseSchema.index({ orgId: 1, branchId: 1, createdAt: -1 });
 
-module.exports = purchaseSchema;
+module.exports = model('Purchase', purchaseSchema);

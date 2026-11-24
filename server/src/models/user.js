@@ -1,4 +1,4 @@
-const { Schema } = require('mongoose');
+const { Schema, model } = require('mongoose');
 const { ACCESS_CODE_VALUES } = require('../config/accessCodes');
 
 // Operario creado por el propietario. Loguea con código de empresa + usuario +
@@ -7,6 +7,7 @@ const { ACCESS_CODE_VALUES } = require('../config/accessCodes');
 // permissions: módulos del panel de administración habilitados para este
 // operario además de su acceso base al POS (ver middlewares/checkAccess.js).
 const userSchema = new Schema({
+    orgId: { type: Schema.Types.ObjectId, ref: 'Organization', required: true },
     username: { type: String, required: true, trim: true, lowercase: true },
     passwordHash: { type: String, required: true },
     name: { type: String, required: true, trim: true },
@@ -16,6 +17,8 @@ const userSchema = new Schema({
     active: { type: Boolean, default: true }
 }, { timestamps: true });
 
-userSchema.index({ username: 1 }, { unique: true });
+// El usuario no se repite dentro de una empresa: dos empresas pueden
+// tener un operario "juan". El login lo busca por código de empresa + usuario.
+userSchema.index({ orgId: 1, username: 1 }, { unique: true });
 
-module.exports = userSchema;
+module.exports = model('User', userSchema);

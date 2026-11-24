@@ -1,7 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { Organization } = require('../models');
-const { getTenantModels } = require('../config/tenantManager');
+const { Organization, User, Branch } = require('../models');
 const { AppError } = require('../middlewares/error');
 
 // ==========================================
@@ -33,18 +32,15 @@ const operatorLogin = async ({ orgCode, username, password, branchId }) => {
 
     if (!org) throw credencialesInvalidas();
 
-    const tenantModels = getTenantModels(org.adminId);
-    const { User, Branch } = tenantModels;
-
     const user = await User.findOne({
-        username: String(username).toLowerCase().trim(), active: true
+        orgId: org._id, username: String(username).toLowerCase().trim(), active: true
     });
     if (!user) throw credencialesInvalidas();
 
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) throw credencialesInvalidas();
 
-    const branches = await Branch.find({ _id: { $in: user.branchIds }, active: true })
+    const branches = await Branch.find({ orgId: org._id, _id: { $in: user.branchIds }, active: true })
         .select('name address');
     if (branches.length === 0) {
         throw new AppError(403, 'No tienes ninguna sucursal asignada. Contacta al administrador.');
@@ -68,7 +64,6 @@ const operatorLogin = async ({ orgCode, username, password, branchId }) => {
         kind: 'operator',
         sub: user._id.toString(),
         orgId: org._id.toString(),
-        adminId: org.adminId,
         branchId: branch._id.toString(),
         username: user.username,
         name: user.name

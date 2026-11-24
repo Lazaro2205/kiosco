@@ -1,8 +1,9 @@
-const { Schema } = require('mongoose');
+const { Schema, model } = require('mongoose');
 
 // Caja de una sucursal. Solo puede haber UNA abierta por sucursal a la vez
 // (índice único parcial). El operario de turno la abre y la cierra.
 const cashSessionSchema = new Schema({
+    orgId: { type: Schema.Types.ObjectId, ref: 'Organization', required: true },
     branchId: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
     status: { type: String, enum: ['open', 'closed'], default: 'open' },
     openedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
@@ -16,9 +17,9 @@ const cashSessionSchema = new Schema({
 }, { timestamps: true });
 
 cashSessionSchema.index(
-    { branchId: 1 },
+    { orgId: 1, branchId: 1 },
     { unique: true, partialFilterExpression: { status: 'open' } }
 );
-cashSessionSchema.index({ branchId: 1, openedAt: -1 });
+cashSessionSchema.index({ orgId: 1, branchId: 1, openedAt: -1 });
 
-module.exports = cashSessionSchema;
+module.exports = model('CashSession', cashSessionSchema);

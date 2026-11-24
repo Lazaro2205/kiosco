@@ -1,9 +1,11 @@
 // Lógica de seed reutilizable: la usa `npm run seed` (contra Atlas) y el
 // modo memoria de desarrollo (auto-seed al arrancar sin MONGODB_URI).
+//
+// Versión provisoria de la tarjeta 1.1: carga el stock inicial directo en
+// BranchStock porque purchase.service todavía no guarda orgId. La tarjeta
+// 1.4 lo vuelve a hacer con una compra real (stock + costo promedio + asiento).
 const bcrypt = require('bcrypt');
-const { Organization } = require('../models');
-const { getTenantModels } = require('../config/tenantManager');
-const { createPurchase } = require('../services/purchase.service');
+const { Organization, Branch, User, Category, Article, BranchStock } = require('../models');
 
 async function seedDemo() {
     const existente = await Organization.findOne({ code: 'DEMO01' });
@@ -12,47 +14,49 @@ async function seedDemo() {
     const org = await Organization.create({
         adminId: 'demo_admin', name: 'Kiosco Demo', code: 'DEMO01', ownerClerkId: 'demo_owner_sin_clerk'
     });
-
-    const tenantModels = getTenantModels(org.adminId);
-    const { Branch, User, Article } = tenantModels;
+    const orgId = org._id;
 
     const [central, norte] = await Branch.create([
-        { name: 'Sucursal Centro', address: 'San Martín 123' },
-        { name: 'Sucursal Norte', address: 'Av. Libertad 456' }
+        { orgId, name: 'Sucursal Centro', address: 'San Martín 123' },
+        { orgId, name: 'Sucursal Norte', address: 'Av. Libertad 456' }
     ]);
 
     await User.create([
         {
-            username: 'juan', name: 'Juan Pérez',
+            orgId, username: 'juan', name: 'Juan Pérez',
             passwordHash: await bcrypt.hash('1234', 10),
             branchIds: [central._id]                       // una sucursal → asignación automática
         },
         {
-            username: 'maria', name: 'María López',
+            orgId, username: 'maria', name: 'María López',
             passwordHash: await bcrypt.hash('1234', 10),
             branchIds: [central._id, norte._id]            // dos sucursales → elige al loguear
         }
     ]);
 
-    const articulos = await Article.create([
-        { code: 'A001', barcode: '7790001000011', name: 'Coca Cola 500ml', category: 'Bebidas', salePrice: 1800 },
-        { code: 'A002', barcode: '7790001000028', name: 'Alfajor Guaymallén', category: 'Golosinas', salePrice: 800 },
-        { code: 'A003', barcode: '7790001000035', name: 'Papas Lays 85g', category: 'Snacks', salePrice: 2500 },
-        { code: 'A004', name: 'Chicles Beldent', category: 'Golosinas', salePrice: 900 }
+    const [bebidas, golosinas, snacks] = await Category.create([
+        { orgId, name: 'Bebidas' },
+        { orgId, name: 'Golosinas' },
+        { orgId, name: 'Snacks' }
     ]);
 
-    // Compra inicial → carga stock en Centro y fija los primeros costos promedio
-    await createPurchase(tenantModels, 'demo_owner_sin_clerk', {
-        branchId: central._id,
-        supplierName: 'Distribuidora Demo',
-        paymentMethod: 'transferencia',
-        items: [
-            { articleId: articulos[0]._id, quantity: 24, unitCost: 1100 },
-            { articleId: articulos[1]._id, quantity: 50, unitCost: 450 },
-            { articleId: articulos[2]._id, quantity: 30, unitCost: 1600 },
-            { articleId: articulos[3]._id, quantity: 40, unitCost: 500 }
-        ]
-    });
+    const articulos = await Article.create([
+        { orgId, code: 'A001', barcode: '7790001000011', name: 'Coca Cola 500ml', categoryId: bebidas._id, salePrice: 1800 },
+        { orgId, code: 'A002', barcode: '7790001000028', name: 'Alfajor Guaymallén', categoryId: golosinas._id, salePrice: 800 },
+        { orgId, code: 'A003', barcode: '7790001000035', name: 'Papas Lays 85g', categoryId: snacks._id, salePrice: 2500 },
+        { orgId, code: 'A004', name: 'Chicles Beldent', categoryId: golosinas._id, salePrice: 900 }
+    ]);
+
+    // Stock inicial en Centro con su costo (lo que haría una compra).
+    const iniciales = [
+        { quantity: 24, avgCost: 1100 },
+        { quantity: 50, avgCost: 450 },
+        { quantity: 30, avgCost: 1600 },
+        { quantity: 40, avgCost: 500 }
+    ];
+    await BranchStock.create(articulos.map((art, i) => ({
+        orgId, branchId: central._id, articleId: art._id, ...iniciales[i]
+    })));
 
     console.log('🌱 Datos demo: empresa DEMO01 — operarios juan/1234 (Centro) y maria/1234 (Centro+Norte)');
     return true;

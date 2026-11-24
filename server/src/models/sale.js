@@ -1,4 +1,4 @@
-const { Schema } = require('mongoose');
+const { Schema, model } = require('mongoose');
 const { PAYMENT_METHODS } = require('../config/constants');
 
 // Venta registrada por un operario dentro de una caja abierta.
@@ -16,10 +16,11 @@ const saleItemSchema = new Schema({
 }, { _id: false });
 
 const saleSchema = new Schema({
+    orgId: { type: Schema.Types.ObjectId, ref: 'Organization', required: true },
     branchId: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
     cashSessionId: { type: Schema.Types.ObjectId, ref: 'CashSession', required: true },
     operatorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    number: { type: Number, required: true },        // correlativo por negocio
+    number: { type: Number, required: true },        // correlativo por empresa
     items: { type: [saleItemSchema], required: true },
     total: { type: Number, required: true, min: 0 },
     paymentMethod: { type: String, enum: PAYMENT_METHODS, required: true },
@@ -33,8 +34,9 @@ const saleSchema = new Schema({
     }
 }, { timestamps: true });
 
-saleSchema.index({ createdAt: -1 });
-saleSchema.index({ branchId: 1, cashSessionId: 1 });
-saleSchema.index({ number: 1 }, { unique: true });
+saleSchema.index({ orgId: 1, createdAt: -1 });
+saleSchema.index({ orgId: 1, branchId: 1, cashSessionId: 1 });
+// El número correlativo de venta no se repite dentro de una empresa.
+saleSchema.index({ orgId: 1, number: 1 }, { unique: true });
 
-module.exports = saleSchema;
+module.exports = model('Sale', saleSchema);

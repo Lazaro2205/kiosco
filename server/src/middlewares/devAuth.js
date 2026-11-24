@@ -1,5 +1,5 @@
-const { Organization } = require('../models');
-const { getTenantModels } = require('../config/tenantManager');
+const models = require('../models');
+const { Organization } = models;
 
 // Auth DEV del PROPIETARIO: bypass de Clerk para testing.
 // Usa los datos demo generados por seedData.js
@@ -11,7 +11,10 @@ async function ownerAuth(req, res, next) {
         req.org = await Organization.findOne({ ownerClerkId: ownerClerkId, active: true });
         
         if (req.org) {
-            req.tenantModels = getTenantModels(req.org.adminId);
+            req.orgId = req.org._id;
+            // req.tenantModels queda como puente hasta que los services reciban
+            // orgId (tarjetas 1.2 y 1.3): ahora son los modelos compartidos.
+            req.tenantModels = models;
         }
         
         next();

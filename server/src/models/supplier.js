@@ -1,8 +1,9 @@
-const { Schema } = require('mongoose');
+const { Schema, model } = require('mongoose');
 
 // Proveedor de mercadería. Se registra desde el módulo de compras y luego
-// se selecciona al cargar una compra. Cada BD de tenant tiene los suyos.
+// se selecciona al cargar una compra. Cada empresa tiene los suyos.
 const supplierSchema = new Schema({
+    orgId: { type: Schema.Types.ObjectId, ref: 'Organization', required: true },
     name: { type: String, required: true, trim: true },
     contactName: { type: String, trim: true },
     phone: { type: String, trim: true },
@@ -13,6 +14,7 @@ const supplierSchema = new Schema({
     active: { type: Boolean, default: true }
 }, { timestamps: true });
 
-supplierSchema.index({ name: 1 }, { unique: true });
+// El nombre del proveedor no se repite dentro de una empresa.
+supplierSchema.index({ orgId: 1, name: 1 }, { unique: true });
 
-module.exports = supplierSchema;
+module.exports = model('Supplier', supplierSchema);

@@ -1,6 +1,6 @@
 const { verifyToken } = require('@clerk/backend');
-const { Organization } = require('../models');
-const { getTenantModels } = require('../config/tenantManager');
+const models = require('../models');
+const { Organization } = models;
 
 // Auth del PROPIETARIO: verifica el token de sesión de Clerk y adjunta la
 // organización del dueño (si ya la creó). Las rutas de gestión usan esto.
@@ -27,7 +27,10 @@ async function ownerAuth(req, res, next) {
         req.org = await Organization.findOne({ ownerClerkId: payload.sub, active: true });
         
         if (req.org) {
-            req.tenantModels = getTenantModels(req.org.adminId);
+            req.orgId = req.org._id;
+            // req.tenantModels queda como puente hasta que los services reciban
+            // orgId (tarjetas 1.2 y 1.3): ahora son los modelos compartidos.
+            req.tenantModels = models;
         }
         
         next();
